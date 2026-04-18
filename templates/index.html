@@ -13,24 +13,28 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="icon" type="image/png" href="../static/js/favicon.png" />
     <style>
       body {
         font-family: "Inter", sans-serif;
       }
       .glass {
-        background: rgba(23, 23, 23, 0.7);
-        backdrop-filter: blur(12px);
+        background: rgba(23, 23, 23, 0.8);
+        backdrop-filter: blur(16px);
       }
       .chat-gradient {
         background: radial-gradient(circle at bottom, #1a1a1a 0%, #0a0a0a 100%);
       }
-      .message-user {
-        background: #2f2f2f;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      .sidebar-item:hover {
-        background: rgba(255, 255, 255, 0.03);
+      /* Sidebar Mobile Logic */
+      @media (max-width: 768px) {
+        .sidebar-closed {
+          transform: translateX(-100%);
+        }
+        .sidebar-open {
+          transform: translateX(0);
+        }
+        .overlay-active {
+          display: block !important;
+        }
       }
       ::-webkit-scrollbar {
         width: 5px;
@@ -39,47 +43,46 @@
         background: #333;
         border-radius: 10px;
       }
-      @keyframes pulse-soft {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.5;
-        }
-      }
-      .ingesting {
-        animation: pulse-soft 2s infinite;
-      }
       .markdown-content p {
         margin-bottom: 0.75rem;
       }
       .markdown-content ol {
         list-style-type: decimal;
-        margin-left: 1.5rem; 
+        margin-left: 1.5rem;
         margin-bottom: 1rem;
-      }
-      .markdown-content li {
-        margin-bottom: 0.5rem; 
-        display: list-item; 
       }
     </style>
   </head>
   <body class="bg-[#0a0a0a] text-zinc-200 overflow-hidden">
-    <div class="flex h-screen w-full">
+    <div
+      id="sidebarOverlay"
+      onclick="toggleSidebar()"
+      class="fixed inset-0 bg-black/60 z-20 hidden backdrop-blur-sm transition-opacity"
+    ></div>
+
+    <div class="flex h-screen w-full relative">
       <aside
-        class="w-72 flex flex-col border-r border-white/5 bg-[#0d0d0d] transition-all duration-300"
+        id="sidebar"
+        class="fixed inset-y-0 left-0 z-30 w-72 flex flex-col border-r border-white/5 bg-[#0d0d0d] transition-transform duration-300 ease-in-out md:relative md:translate-x-0 sidebar-closed"
       >
         <div class="p-6">
-          <div class="flex items-center gap-3 mb-8">
-            <div
-              class="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center"
-            >
-              <i class="fa-solid fa-bolt text-white text-sm"></i>
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center"
+              >
+                <i class="fa-solid fa-bolt text-white text-sm"></i>
+              </div>
+              <span class="font-bold text-lg tracking-tight text-white"
+                >Nexus RAG</span
+              >
             </div>
-            <span class="font-bold text-lg tracking-tight text-white"
-              >Nexus RAG</span
+            <button
+              onclick="toggleSidebar()"
+              class="md:hidden text-zinc-400 p-2"
             >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
           </div>
 
           <button
@@ -125,39 +128,55 @@
             ></div>
             <div class="text-sm">
               <p class="font-medium text-white">Pro Plan</p>
-              <p class="text-xs text-zinc-500">v4.0-mini Active</p>
+              <p class="text-xs text-zinc-500 text-nowrap">v4.0-mini Active</p>
             </div>
           </div>
         </div>
       </aside>
 
-      <main class="flex-1 flex flex-col chat-gradient relative">
+      <main
+        class="flex-1 flex flex-col chat-gradient relative w-full overflow-hidden"
+      >
         <header
-          class="h-16 flex items-center justify-between px-8 glass border-b border-white/5 z-10"
+          class="h-16 flex items-center justify-between px-4 md:px-8 glass border-b border-white/5 z-10"
         >
-          <div class="flex items-center gap-2">
-            <span
-              class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-            ></span>
-            <span class="text-xs font-medium text-zinc-400">System Ready</span>
+          <div class="flex items-center gap-3">
+            <button
+              onclick="toggleSidebar()"
+              class="md:hidden text-zinc-400 p-2 -ml-2"
+            >
+              <i class="fa-solid fa-bars-staggered text-lg"></i>
+            </button>
+            <div class="flex items-center gap-2">
+              <span
+                class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+              ></span>
+              <span class="text-xs font-medium text-zinc-400 hidden sm:inline"
+                >System Ready</span
+              >
+            </div>
           </div>
-          <div class="flex items-center gap-4">
-            <button class="text-zinc-400 hover:text-white transition">
+          <div class="flex items-center gap-2 md:gap-4">
+            <button class="text-zinc-400 hover:text-white p-2 transition">
               <i class="fa-solid fa-share-nodes"></i>
             </button>
-            <button class="text-zinc-400 hover:text-white transition">
+            <button class="text-zinc-400 hover:text-white p-2 transition">
               <i class="fa-solid fa-gear"></i>
             </button>
           </div>
         </header>
 
-        <div id="chat-container" class="flex-1 overflow-y-auto px-4 py-8">
-          <div class="max-w-3xl mx-auto space-y-8">
-            <div id="welcome-screen" class="text-center py-20">
-              <h1 class="text-4xl font-bold text-white mb-4 tracking-tight">
+        <div id="chat-container" class="flex-1 overflow-y-auto px-4 py-6">
+          <div class="max-w-3xl mx-auto space-y-6 md:space-y-8">
+            <div id="welcome-screen" class="text-center py-12 md:py-20">
+              <h1
+                class="text-2xl md:text-4xl font-bold text-white mb-4 tracking-tight"
+              >
                 What would you like to know?
               </h1>
-              <p class="text-zinc-400 max-w-md mx-auto leading-relaxed">
+              <p
+                class="text-zinc-400 max-w-sm md:max-w-md mx-auto leading-relaxed text-sm md:text-base"
+              >
                 Upload your documents to the knowledge base and I'll help you
                 extract insights instantly.
               </p>
@@ -165,10 +184,12 @@
           </div>
         </div>
 
-        <div class="p-6">
+        <div
+          class="p-4 md:p-6 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a] to-transparent"
+        >
           <div class="max-w-3xl mx-auto relative group">
             <div
-              class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-10 group-focus-within:opacity-20 transition duration-1000"
+              class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-10 group-focus-within:opacity-25 transition duration-500"
             ></div>
             <div
               class="relative bg-[#1a1a1a] border border-white/10 rounded-2xl p-2 shadow-2xl"
@@ -176,12 +197,12 @@
               <textarea
                 id="userInput"
                 rows="1"
-                class="w-full bg-transparent border-none focus:ring-0 text-white placeholder-zinc-500 py-3 px-4 resize-none max-h-40"
-                placeholder="Ask anything about your data..."
+                class="w-full bg-transparent border-none focus:ring-0 text-white placeholder-zinc-500 py-3 px-4 resize-none max-h-40 text-sm md:text-base"
+                placeholder="Ask anything..."
               ></textarea>
 
               <div class="flex items-center justify-between px-2 pb-1">
-                <div class="flex gap-2 text-zinc-500">
+                <div class="flex gap-1 md:gap-2 text-zinc-500">
                   <button class="hover:text-zinc-300 p-2 rounded-lg transition">
                     <i class="fa-solid fa-paperclip"></i>
                   </button>
@@ -191,14 +212,14 @@
                 </div>
                 <button
                   id="sendBtn"
-                  class="bg-indigo-600 hover:bg-indigo-500 text-white w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-indigo-500/20"
+                  class="bg-indigo-600 hover:bg-indigo-500 text-white w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-lg shadow-indigo-500/20"
                 >
-                  <i class="fa-solid fa-arrow-up"></i>
+                  <i class="fa-solid fa-arrow-up text-sm"></i>
                 </button>
               </div>
             </div>
             <p
-              class="text-center text-[10px] text-zinc-600 mt-4 tracking-wide uppercase"
+              class="text-center text-[9px] md:text-[10px] text-zinc-600 mt-4 tracking-wide uppercase hidden sm:block"
             >
               Enterprise Grade Security &bull; SOC2 Compliant &bull; 256-bit
               Encryption
@@ -208,25 +229,31 @@
       </main>
     </div>
 
-    <template id="doc-item-tmpl">
-      <div
-        class="sidebar-item group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all border border-transparent hover:border-white/5"
-      >
-        <i class="fa-regular fa-file-pdf text-rose-500 text-lg"></i>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-zinc-300 truncate"></p>
-          <p
-            class="text-[10px] text-zinc-600 uppercase tracking-tighter font-bold"
-          >
-            Processed
-          </p>
-        </div>
-        <i
-          class="fa-solid fa-circle-check text-[10px] text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"
-        ></i>
-      </div>
-    </template>
+    <script>
+      // Sidebar Toggle Logic
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebarOverlay");
 
+        sidebar.classList.toggle("sidebar-open");
+        sidebar.classList.toggle("sidebar-closed");
+        overlay.classList.toggle("overlay-active");
+      }
+
+      // Auto-expand textarea
+      const tx = document.getElementsByTagName("textarea");
+      for (let i = 0; i < tx.length; i++) {
+        tx[i].setAttribute(
+          "style",
+          "height:" + tx[i].scrollHeight + "px;overflow-y:hidden;",
+        );
+        tx[i].addEventListener("input", OnInput, false);
+      }
+      function OnInput() {
+        this.style.height = 0;
+        this.style.height = this.scrollHeight + "px";
+      }
+    </script>
     <script src="/static/js/chat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </body>
